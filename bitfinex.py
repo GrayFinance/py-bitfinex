@@ -6,8 +6,15 @@ import time
 
 class Bitfinex:
 
-    def __init__(self, api_key: str, api_secret_key: str, url="https://api.bitfinex.com/"):
+    def __init__(
+            self, 
+            api_key: str, 
+            api_secret_key: str, 
+            url="https://api.bitfinex.com/", 
+            url_pub="https://api-pub.bitfinex.com/"
+        ):
         self.__url = url
+        self.__url_pub = url_pub
         self.__api_key = api_key
         self.__api_secret_key = api_secret_key
 
@@ -29,6 +36,14 @@ class Bitfinex:
         response = requests.request(method.upper(), self.__url + path, headers=headers, params=params, data=body)
         response.raise_for_status()
         return response.json()
+    
+    def call_pub(self, method: str, path: str) -> dict:
+        response = requests.request(method=method, url=self.__url_pub + path)
+        response.raise_for_status()
+        return response.json()
+
+    def candles(self, candle="trade:1W:tBTCUSD", section="hist"):
+        return self.call_pub("GET", f"v2/candles/{candle}/{section}")
 
     def deposit_address(self, method='', wallet="exchange"):
         if not method:
