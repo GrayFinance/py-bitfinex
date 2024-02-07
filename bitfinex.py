@@ -8,8 +8,8 @@ class Bitfinex:
 
     def __init__(
             self, 
-            api_key: str, 
-            api_secret_key: str, 
+            api_key=None, 
+            api_secret_key=None, 
             url="https://api.bitfinex.com/", 
             url_pub="https://api-pub.bitfinex.com/"
         ):
@@ -19,10 +19,13 @@ class Bitfinex:
         self.__api_secret_key = api_secret_key
 
     def sign(self, path: str, nonce: str, data: str):
-        payload = f"/api/{path}{nonce}{data.decode('utf-8')}"
-        signature = hmac.new(bytes(self.__api_secret_key, 'utf-8'), bytes(payload, 'utf-8'), hashlib.sha384)
-        return signature.hexdigest()
-
+        if self.__api_key and self.__api_secret_key:
+            payload = f"/api/{path}{nonce}{data.decode('utf-8')}"
+            signature = hmac.new(bytes(self.__api_secret_key, 'utf-8'), bytes(payload, 'utf-8'), hashlib.sha384)
+            return signature.hexdigest()
+        else:
+            return ""
+    
     def call(self, method: str, path: str, data=None, params=None):
         body = json.dumps(data).encode('utf-8')
         nonce = str(int(time.time() * 1000))
@@ -45,6 +48,10 @@ class Bitfinex:
     def candles(self, candle="trade:1W:tBTCUSD", section="hist"):
         return self.call_pub("GET", f"v2/candles/{candle}/{section}")
 
+    def get_price(self, ticket="btcusd"):
+        r = self.call("GET", f"v1/pubticker/{ticket}")
+        return {"SELL": r["ask"], "BUY": r["bid"]}
+    
     def deposit_address(self, method='', wallet="exchange"):
         if not method:
             method = 'bitcoin'
